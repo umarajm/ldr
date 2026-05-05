@@ -804,6 +804,62 @@
 </head>
 <body>
 
+<!-- PIN Lock Screen -->
+<div id="lockScreen" style="
+  position:fixed;inset:0;z-index:99999;
+  background:#07000f;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.4rem;
+  font-family:'Cormorant Garamond',Georgia,serif;
+">
+  <div style="font-size:3rem;animation:heartbeat-glow 1.8s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(233,30,140,0.8))">💗</div>
+  <div style="font-family:'Sacramento',cursive;font-size:2.2rem;color:#f8bbd0;text-shadow:0 0 30px rgba(248,187,208,0.5);letter-spacing:0.05em;">our little secret</div>
+  <div style="font-size:0.82rem;color:rgba(244,143,177,0.5);letter-spacing:0.2em;text-transform:uppercase;margin-top:-0.6rem;">enter the password 🌙</div>
+
+  <div style="position:relative;">
+    <input id="pinInput" type="password"
+      placeholder="type here…"
+      autocomplete="off"
+      style="
+        background:rgba(255,255,255,0.04);
+        border:1px solid rgba(233,30,140,0.35);
+        border-radius:50px;
+        padding:0.75rem 1.6rem;
+        color:#fce4ec;
+        font-family:'Cormorant Garamond',serif;
+        font-size:1.1rem;
+        letter-spacing:0.15em;
+        text-align:center;
+        outline:none;
+        width:220px;
+        backdrop-filter:blur(8px);
+        transition:all 0.3s;
+        caret-color:#e91e8c;
+      "
+    >
+  </div>
+
+  <div id="pinError" style="
+    font-size:0.85rem;color:#e91e8c;font-style:italic;
+    opacity:0;transition:opacity 0.3s;letter-spacing:0.05em;
+    min-height:1.2rem;
+  ">not quite, love 🥺</div>
+
+  <button id="pinBtn" style="
+    padding:0.65rem 2rem;
+    border-radius:50px;
+    border:1px solid rgba(233,30,140,0.4);
+    background:rgba(0,0,0,0.3);
+    color:#f8bbd0;
+    font-family:'Cormorant Garamond',serif;
+    font-size:1rem;letter-spacing:0.1em;
+    cursor:pointer;
+    transition:all 0.3s;
+    backdrop-filter:blur(6px);
+  ">enter 💕</button>
+</div>
+
+<div id="mainContent" style="display:none;width:100%;">
 <div class="aurora">
   <div class="aurora-band a1"></div>
   <div class="aurora-band a2"></div>
@@ -1003,9 +1059,81 @@
   </div>
 
 </div><!-- end .container -->
+</div><!-- end #mainContent -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+// ── PIN Lock ──────────────────────────────────────────────────────────
+(function(){
+  const SECRET = 'reyna';
+  const SESSION_KEY = 'fya_unlocked';
+
+  function unlock(animate) {
+    const lock = document.getElementById('lockScreen');
+    const main = document.getElementById('mainContent');
+    if (animate) {
+      lock.style.transition = 'opacity 0.8s ease';
+      lock.style.opacity = '0';
+      setTimeout(() => {
+        lock.style.display = 'none';
+        main.style.display = '';
+      }, 800);
+    } else {
+      lock.style.display = 'none';
+      main.style.display = '';
+    }
+    try { sessionStorage.setItem(SESSION_KEY, '1'); } catch(e){}
+  }
+
+  // already unlocked this session?
+  try {
+    if (sessionStorage.getItem(SESSION_KEY) === '1') { unlock(false); return; }
+  } catch(e){}
+
+  const input = document.getElementById('pinInput');
+  const btn   = document.getElementById('pinBtn');
+  const err   = document.getElementById('pinError');
+
+  function tryUnlock() {
+    if (input.value.trim().toLowerCase() === SECRET) {
+      unlock(true);
+    } else {
+      err.style.opacity = '1';
+      input.style.borderColor = '#e91e8c';
+      input.style.boxShadow = '0 0 18px rgba(233,30,140,0.5)';
+      input.style.animation = 'shake 0.4s ease';
+      setTimeout(() => {
+        input.style.animation = '';
+        input.style.borderColor = 'rgba(233,30,140,0.35)';
+        input.style.boxShadow = 'none';
+        err.style.opacity = '0';
+        input.value = '';
+      }, 1400);
+    }
+  }
+
+  btn.addEventListener('click', tryUnlock);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+  input.addEventListener('focus', () => {
+    input.style.borderColor = 'rgba(233,30,140,0.7)';
+    input.style.boxShadow = '0 0 20px rgba(233,30,140,0.2)';
+  });
+  input.addEventListener('blur', () => {
+    input.style.borderColor = 'rgba(233,30,140,0.35)';
+    input.style.boxShadow = 'none';
+  });
+
+  // inject shake keyframe
+  const s = document.createElement('style');
+  s.textContent = `@keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-6px)}
+    80%{transform:translateX(6px)}
+  }`;
+  document.head.appendChild(s);
+})();
 // ── 3D Heart ──────────────────────────────────────────────────────────
 (function(){
   const canvas = document.getElementById('heart-canvas');
